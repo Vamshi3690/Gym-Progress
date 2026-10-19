@@ -6,6 +6,11 @@ create table if not exists public.gym_settings (
   split text not null default 'PPL',
   custom_split jsonb,
   theme text not null default 'system' check (theme in ('system', 'light', 'dark')),
+  routines jsonb not null default '[]'::jsonb,
+  active_routine_id text,
+  workout_history jsonb not null default '[]'::jsonb,
+  active_session jsonb,
+  custom_exercises jsonb not null default '[]'::jsonb,
   updated_at timestamptz not null default now()
 );
 
@@ -19,11 +24,31 @@ create table if not exists public.exercise_logs (
   reps integer not null check (reps > 0),
   sets integer not null check (sets > 0),
   logged_on date not null default current_date,
+  session_id uuid,
+  routine_name text,
+  set_details jsonb not null default '[]'::jsonb,
+  notes text not null default '',
   created_at timestamptz not null default now()
 );
 
 create index if not exists exercise_logs_user_date_idx
   on public.exercise_logs (user_id, logged_on desc);
+
+alter table public.gym_settings
+  add column if not exists routines jsonb not null default '[]'::jsonb,
+  add column if not exists active_routine_id text,
+  add column if not exists workout_history jsonb not null default '[]'::jsonb,
+  add column if not exists active_session jsonb,
+  add column if not exists custom_exercises jsonb not null default '[]'::jsonb;
+
+alter table public.exercise_logs
+  add column if not exists session_id uuid,
+  add column if not exists routine_name text,
+  add column if not exists set_details jsonb not null default '[]'::jsonb,
+  add column if not exists notes text not null default '';
+
+create index if not exists exercise_logs_user_session_idx
+  on public.exercise_logs (user_id, session_id);
 
 alter table public.gym_settings enable row level security;
 alter table public.exercise_logs enable row level security;
