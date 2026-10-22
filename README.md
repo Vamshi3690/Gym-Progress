@@ -1,33 +1,46 @@
 # Gym Progress
 
-A mobile-first workout tracker and progressive-overload coach. Start a routine, see your previous performance, log warm-up/working/failure/drop sets with RPE and notes, and finish a workout into your history. The app includes routines, an exercise library with custom exercises, progress analytics, offline session drafts, and an installable PWA. Supabase Auth and Postgres sync account data; Row Level Security keeps records private to their owner.
+A mobile-friendly workout logger that makes it easy to start a routine, record your sets, and compare progress over time. The app runs locally without an account and can sync to Supabase when you sign in.
 
-## Set up Supabase
+## Tech stack
 
-1. Open the project dashboard and go to **SQL Editor**.
-2. Open `supabase/schema.sql` from this repository, copy its contents into a new SQL query, and run it. This creates the app tables, workout-set fields, and owner-only RLS policies.
-3. If you already ran an earlier version of the schema, run `supabase/workout-upgrade.sql` in the SQL Editor. This adds routine, session, and set-detail storage to the existing tables without deleting your current logs.
-4. In **Authentication → URL Configuration**, set the local Site URL to `http://localhost:8000` and add these Redirect URLs:
-   - `http://localhost:8000/**`
-   - `http://127.0.0.1:8000/**`
-5. If you enable email confirmation, follow the confirmation link before signing in. For a hosted deployment, add its URL to the Redirect URLs too.
+- React, TypeScript, Vite
+- Tailwind CSS and accessible shadcn-style UI primitives
+- TanStack Query for Supabase data and Zustand for interface/session state
+- Dexie IndexedDB for workouts, routines, drafts, and the sync outbox
+- Supabase Auth, Postgres, and Row Level Security
+- Vite PWA with Workbox precaching and Background Sync wakeups
+- Recharts for exercise progression charts
 
-The browser app is configured with the project's Supabase URL and **publishable** key. Publishable keys are intended for browser use; the RLS policies protect user data. Never put a Supabase secret or `service_role` key in this app or in GitHub.
+## Open the app on Windows
 
-## Run locally
+1. Make sure Node.js is installed (Node.js 20.19+ or 22.12+).
+2. Double-click **Start Gym Progress.bat** in this folder.
+3. The first run installs the app's required files. Wait for your browser to open.
+4. Keep the black window open while you use the app. Close it when you are finished.
 
-Start a local server in this folder (service workers and install prompts need localhost or HTTPS):
+If Windows asks which app to use, right-click the file and choose **Open**. If the browser does not open automatically, copy the `Local` address shown in the black window (usually http://localhost:5173) into your browser.
 
-```powershell
-python -m http.server 8000
-```
+The app works locally without Supabase sign-in. To use account sync, create `.env.local` from `.env.example` and fill in your Supabase project URL and publishable key before starting.
 
-Then visit http://localhost:8000. After the first online load, the app shell and exercise library are cached for offline use. A workout in progress saves on the device immediately; completed exercise entries queue and sync when the connection returns. Signing in and syncing to Supabase require internet access.
+### Start from a terminal (optional)
 
-## Install on a phone
+Open this folder in Terminal or PowerShell and run `npm install` once, then `npm run dev`. Open the `Local` address printed in the terminal.
 
-Deploy the static folder to an HTTPS host such as Vercel, then open the site in your phone browser and choose **Add to Home Screen** or **Install app**. On iOS, use Safari's Share menu. The web app manifest and service worker are included in this repository.
+To create a production build, run `npm run build`. Vite writes the deployable app to `dist/`; Vercel and Cloudflare Pages can use `npm run build` and `dist` as the output directory.
 
-## Existing device data
+## Supabase
 
-After signing in, the app offers to import existing workout logs from the old local-only version. It does not send that data until you choose **Import this device's data**. Data remains available in the browser backup until import succeeds.
+Run `supabase/schema.sql` for a new project. If the older Gym Progress schema is already installed, run `supabase/workout-upgrade.sql` first to add routine, active-session, and set-detail fields. Set the Supabase Auth Site URL for your deployment and add redirect URLs for http://localhost:5173/**, http://127.0.0.1:5173/**, and your hosted app.
+
+The browser uses a Supabase publishable key. Never add a Supabase secret or `service_role` key to the frontend or commit it to GitHub. Row Level Security policies in the schema keep each user's records private.
+
+## Local data and offline use
+
+Workout logs, routines, and active drafts save to IndexedDB on this browser. They remain available offline. Signed-in changes enter a local outbox and sync when the app is online. Background Sync nudges an open app where supported; if the browser has closed, queued changes sync the next time you open the app. Data does not sync between devices until you sign in. Export workout history from the Progress tab as CSV.
+
+## Deploy
+
+For Vercel, import this GitHub repository, set the build command to `npm run build`, the output directory to `dist`, and add `VITE_SUPABASE_URL` plus `VITE_SUPABASE_PUBLISHABLE_KEY` as project environment variables. Configure the deployed URL in Supabase Auth redirects. Cloudflare Pages uses the same build command and output directory.
+
+PostHog and Plausible are intentionally not wired in; add one only if you decide that usage analytics are useful for your privacy-first app.

@@ -1,0 +1,9 @@
+export type Exercise = { name: string; group: string; muscle: string; level: string; equipment: string; cues: string[] }
+export type RoutineExercise = { name: string; muscle: string; group: string; sets: number; reps: string; rest: number; notes?: string }
+export type RoutineDay = { id: string; name: string; focus: string; rest?: boolean; exercises: RoutineExercise[] }
+export type Routine = { id: string; name: string; days: RoutineDay[] }
+export type SetType = 'Warm-up' | 'Working' | 'Failure' | 'Drop'
+export type WorkoutSet = { id: string; type: SetType; weight: number; reps: number; rpe?: number; notes?: string; complete: boolean }
+export type SessionExercise = Omit<RoutineExercise, 'sets'> & { targetSets: number; sets: WorkoutSet[]; notes?: string }
+export type WorkoutSession = { id: string; routineId: string; routineName: string; dayId: string; dayName: string; date: string; startedAt: string; exercises: SessionExercise[] }
+export type WorkoutLog = { id: string; exercise: string; muscle: string; group: string; weight: number; reps: number; sets: number; date: string; sessionId?: string; routineName?: string; setDetails: WorkoutSet[]; notes?: string; pendingSync?: boolean }
